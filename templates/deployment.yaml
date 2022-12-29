@@ -26,6 +26,10 @@ spec:
         command:
         - "sh"
         - "/multiplexer-entrypoint.sh"
+        ports:
+        - name: https
+          containerPort: 8443
+          protocol: TCP
         volumeMounts:
         - name: config
           mountPath: /multiplexer-entrypoint.sh
