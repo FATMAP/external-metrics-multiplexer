@@ -31,7 +31,7 @@ data:
     # Generate self-signed SSL certs (not great!)
     apk add openssl inotify-tools && openssl req -x509 -nodes -days 3650 -subj "/C=NA/ST=NA/O=NA/CN=NA" -newkey rsa:2048 -keyout /etc/nginx/ssl.key -out /etc/nginx/ssl.crt
 
-    reloader.sh # initial config
+    /reloader.sh # initial config
 
     # Watch for changes to the bound service account token or configmap and reload nginx config
     inotifyd reloader.sh /var/run/secrets/kubernetes.io/serviceaccount/token:n &
