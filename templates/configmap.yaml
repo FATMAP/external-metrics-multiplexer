@@ -27,7 +27,7 @@ data:
       }
       access_log /dev/stdout logger-json if=$loggable;
       {{ else if eq $.Values.logging.access.level "all"}}
-      access_log /dev/stdout logger-json
+      access_log /dev/stdout logger-json;
       {{- end }}
 
       listen 8443 ssl;
