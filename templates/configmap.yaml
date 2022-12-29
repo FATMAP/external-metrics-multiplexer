@@ -14,39 +14,52 @@ data:
     nginx -g 'daemon off;'
 
   multiplexer-nginx.conf: |
+    log_format logger-json escape=json '{"source": "nginx", "time": $msec, "resp_body_size": $body_bytes_sent, "host": "$http_host", "address": "$remote_addr", "request_length": $request_length, "method": "$request_method", "uri": "$request_uri", "status": $status,  "user_agent": "$http_user_agent", "resp_time": $request_time, "upstream_addr": "$upstream_addr"}';
+
     server {
-     listen 8443 ssl;
-     ssl_certificate      /etc/nginx/ssl.crt;
-     ssl_certificate_key  /etc/nginx/ssl.key;
 
-     resolver kube-dns.kube-system.svc.cluster.local valid=5s;
+      {{ if eq $.Values.logging.access.level "errors"}}
+      map $status $loggable {
+        ~^[23]  0;
+        default 1;
+      }
+      access_log /dev/stdout logger-json if=$loggable;
+      {{ else if eq $.Values.logging.access.level "all"}}
+      access_log /dev/stdout logger-json
+      {{- end }}
 
-     # Ensure correct rewrites
-     rewrite_log on;
-     error_log   /dev/stdout notice;
+      listen 8443 ssl;
+      ssl_certificate      /etc/nginx/ssl.crt;
+      ssl_certificate_key  /etc/nginx/ssl.key;
 
-     # Healthcheck
-     location = /health {
-       return 200 'ok';
-     }
+      resolver kube-dns.kube-system.svc.cluster.local valid=5s;
 
-     {{ range $.Values.metricsProviders }}
-     # {{ .name }}
-     set ${{ .name }} {{ .service }};
-     location ~* /apis/external.metrics.k8s.io/v1beta1/namespaces/.*/{{ .prefix }} {
-       {{ if .strip_prefix }}
-       rewrite ^(/apis/external.metrics.k8s.io/v1beta1/namespaces/.*)/{{ .prefix }}(.*)$ $1/$2 break;
-       {{- end }}
-       proxy_pass https://${{ .name }}$uri$is_args$args;
-     }
-     {{ end }}
+      # Ensure correct rewrites
+      rewrite_log on;
+      error_log   /dev/stdout {{  $.Values.logging.error.level }};
 
-     # Catch-all: API base
-     set $defaultupstream {{ $.Values.defaultProviderUrl }};
-     location ~* /apis/external.metrics.k8s.io/v1beta1/ {
-       proxy_pass https://$defaultupstream;
-     }
-     location / {
-       proxy_pass https://$defaultupstream;
-     }
+      # Healthcheck
+      location = /health {
+        return 200 'ok';
+      }
+
+      {{ range $.Values.metricsProviders }}
+      # {{ .name }}
+      set ${{ .name }} {{ .service }};
+      location ~* /apis/external.metrics.k8s.io/v1beta1/namespaces/.*/{{ .prefix }} {
+        {{ if .strip_prefix }}
+        rewrite ^(/apis/external.metrics.k8s.io/v1beta1/namespaces/.*)/{{ .prefix }}(.*)$ $1/$2 break;
+        {{- end }}
+        proxy_pass https://${{ .name }}$uri$is_args$args;
+      }
+      {{ end }}
+
+      # Catch-all: API base
+      set $defaultupstream {{ $.Values.defaultProviderUrl }};
+      location ~* /apis/external.metrics.k8s.io/v1beta1/ {
+        proxy_pass https://$defaultupstream;
+      }
+      location / {
+        proxy_pass https://$defaultupstream;
+      }
     }
