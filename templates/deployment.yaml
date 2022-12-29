@@ -44,3 +44,4 @@ spec:
       - name: config
         configMap:
           name: metricsmultiplexer
+          defaultMode: 0544
