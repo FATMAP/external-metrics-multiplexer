@@ -10,6 +10,8 @@ data:
     # Generate self-signed SSL certs (not great!)
     apk add openssl && openssl req -x509 -nodes -days 365 -subj "/C=NA/ST=NA/O=NA/CN=NA" -newkey rsa:2048 -keyout /etc/nginx/ssl.key -out /etc/nginx/ssl.crt
 
+    cat multiplexer-nginx.conf > /etc/nginx/conf.d/default.conf
+
     # Finally, start up nginx
     nginx -g 'daemon off;'
 
