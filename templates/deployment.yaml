@@ -37,6 +37,9 @@ spec:
         - name: config
           mountPath: /multiplexer-nginx.conf
           subPath: multiplexer-nginx.conf
+        - name: config
+          mountPath: /reloader.sh
+          subPath: reloader.sh
       volumes:
       - name: config
         configMap:
