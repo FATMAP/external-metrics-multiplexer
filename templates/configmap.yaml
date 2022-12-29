@@ -10,10 +10,6 @@ data:
     # Generate self-signed SSL certs (not great!)
     apk add openssl && openssl req -x509 -nodes -days 365 -subj "/C=NA/ST=NA/O=NA/CN=NA" -newkey rsa:2048 -keyout /etc/nginx/ssl.key -out /etc/nginx/ssl.crt
 
-    # Fill in the ServiceAccount token in the nginx config
-    TOKEN=`cat /var/run/secrets/kubernetes.io/serviceaccount/token`
-    cat multiplexer-nginx.conf | sed "s/KUBERNETESAUTHTOKEN/$TOKEN/" > /etc/nginx/conf.d/default.conf
-
     # Finally, start up nginx
     nginx -g 'daemon off;'
 
@@ -34,10 +30,6 @@ data:
        return 200 'ok';
      }
 
-     # Authorization: use the ServiceAccount Token
-     # (Replaced with actual value in entrypoint.sh)
-     set $authz "Bearer KUBERNETESAUTHTOKEN";
-
      {{ range $.Values.metricsProviders }}
      # {{ .name }}
      set ${{ .name }} {{ .service }};
@@ -45,7 +37,6 @@ data:
        {{ if .strip_prefix }}
        rewrite ^(/apis/external.metrics.k8s.io/v1beta1/namespaces/.*)/{{ .prefix }}(.*)$ $1/$2 break;
        {{ end }}
-       proxy_set_header Authorization $authz;
        proxy_pass https://${{ .name }}$uri$is_args$args;
      }
      {{ end }}
@@ -53,11 +44,9 @@ data:
      # Catch-all: API base
      set $defaultupstream {{ $.Values.defaultProviderUrl }};
      location ~* /apis/external.metrics.k8s.io/v1beta1/ {
-       proxy_set_header Authorization $authz;
        proxy_pass https://$defaultupstream;
      }
      location / {
-       proxy_set_header Authorization $authz;
        proxy_pass https://$defaultupstream;
      }
     }
