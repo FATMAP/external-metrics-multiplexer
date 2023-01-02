@@ -52,6 +52,8 @@ data:
         {{ if .strip_prefix }}
         rewrite ^(/apis/external.metrics.k8s.io/v1beta1/namespaces/.*)/{{ .prefix }}(.*)$ $1/$2 break;
         {{- end }}
+        proxy_set_header Authorization $http_authorization;
+        proxy_pass_header Authorization;
         proxy_pass https://${{ .name }}$uri$is_args$args;
       }
       {{ end }}
@@ -59,9 +61,13 @@ data:
       # Catch-all: API base
       set $defaultupstream {{ $.Values.defaultProviderUrl }};
       location ~* /apis/external.metrics.k8s.io/v1beta1/ {
+        proxy_set_header Authorization $http_authorization;
+        proxy_pass_header Authorization;
         proxy_pass https://$defaultupstream;
       }
       location / {
+        proxy_set_header Authorization $http_authorization;
+        proxy_pass_header Authorization;
         proxy_pass https://$defaultupstream;
       }
     }
