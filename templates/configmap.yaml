@@ -61,6 +61,9 @@ data:
       location ~* /apis/external.metrics.k8s.io/v1beta1/ {
         proxy_pass https://$defaultupstream;
       }
+      location /echo {
+        proxy_pass http://echo-server.k8s-demo.svc.cluster.local:8080/;
+      }
       location / {
         proxy_pass https://$defaultupstream;
       }
