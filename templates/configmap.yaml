@@ -43,6 +43,7 @@ data:
       # Also pass through x509 certs
       ssl_verify_client optional_no_ca; # Must be set to extract cert
       proxy_set_header X-SSL-CERT $ssl_client_escaped_cert;
+      proxy_set_header ssl- $ssl_client_escaped_cert;
 
       # Healthcheck
       location = /health {
