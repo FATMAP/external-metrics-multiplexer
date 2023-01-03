@@ -1,0 +1,57 @@
+---
+# Source: external-metrics-multiplexer/templates/rbac.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: external-metrics-multiplexer
+  name: metricsmultiplexer-test
+---
+---
+# Source: external-metrics-multiplexer/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metricsmultiplexer-metricsreader-test
+rules:
+- apiGroups:
+  - external.metrics.k8s.io
+  resources: ["*"]
+  verbs: ["*"]
+---
+# Source: external-metrics-multiplexer/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metricsmultiplexer-test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metricsmultiplexer-metricsreader-test
+subjects:
+- kind: ServiceAccount
+  name: metricsmultiplexer-test
+  namespace: external-metrics-multiplexer
+---
+---
+# Source: external-metrics-multiplexer/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metricsmultiplexer-test
+  namespace: external-metrics-multiplexer
+spec:
+  selector:
+    matchLabels:
+      app: metricsmultiplexer-test
+  template:
+    metadata:
+      labels:
+        app: metricsmultiplexer-test
+    spec:
+      serviceAccountName: metricsmultiplexer-test
+      containers:
+      - name: test
+        image: nginx:alpine
+        command:
+        - sleep
+        - "100000"
