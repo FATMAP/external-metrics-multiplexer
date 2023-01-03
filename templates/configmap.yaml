@@ -40,6 +40,14 @@ data:
       rewrite_log on;
       error_log   /dev/stdout {{  $.Values.logging.error.level }};
 
+      # Add headers for all locations to pass bearer tokens
+      proxy_set_header Authorization $http_authorization;
+      proxy_pass_header Authorization;
+
+      # Also pass through x509 certs
+      ssl_verify_client optional_no_ca; # Must be set to extract cert
+      proxy_set_header X-SSL-CERT $ssl_client_escaped_cert;
+
       # Healthcheck
       location = /health {
         return 200 'ok';
@@ -52,8 +60,6 @@ data:
         {{ if .strip_prefix }}
         rewrite ^(/apis/external.metrics.k8s.io/v1beta1/namespaces/.*)/{{ .prefix }}(.*)$ $1/$2 break;
         {{- end }}
-        proxy_set_header Authorization $http_authorization;
-        proxy_pass_header Authorization;
         proxy_pass https://${{ .name }}$uri$is_args$args;
       }
       {{ end }}
@@ -61,13 +67,9 @@ data:
       # Catch-all: API base
       set $defaultupstream {{ $.Values.defaultProviderUrl }};
       location ~* /apis/external.metrics.k8s.io/v1beta1/ {
-        proxy_set_header Authorization $http_authorization;
-        proxy_pass_header Authorization;
         proxy_pass https://$defaultupstream;
       }
       location / {
-        proxy_set_header Authorization $http_authorization;
-        proxy_pass_header Authorization;
         proxy_pass https://$defaultupstream;
       }
     }
