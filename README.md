@@ -1,3 +1,7 @@
+# Deprecated and archived
+2023-02-21 @afirth https://terrascope.atlassian.net/browse/SRE-476
+no longer used since migrating to https://github.com/FATMAP/k8s-keda/
+
 # external-metrics-multiplexer
 
 [External Metrics](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/external-metrics-api.md) is the blessed Kubernetes way of retrieving metrics and exposing them to the Kubernetes API to provide data for autoscaling decisions.
